@@ -1,0 +1,5 @@
+numpy==1.26.4
+opencv_python==4.5.5.64
+paddlepaddle_gpu==2.6.0.post120
+paddleseg==2.8.0
+tqdm==4.66.2
