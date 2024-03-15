@@ -56,7 +56,7 @@ python core.py
 Demo parameters:
 
 ```
-python core.py --input_video demo.mp4 --output_dir output --capture_type time --capture_range 1 3 --watermark_numbers 2
+python core.py --input_video demo.mp4 --device gpu --output_dir output --capture_type time --capture_range 1 3 --watermark_numbers 2
 ```
 
 Note that when there is a watermark in the screen, be sure to use the **watermark_numbers** parameter to set the number of watermarks, when the **watermark_numbers** parameter is greater than 0, a pop-up window will appear, select any two opposite corners of a watermark in the screen to frame the watermark.

@@ -56,7 +56,7 @@ python core.py
 demo参数：
 
 ```
-python core.py --input_video demo.mp4 --output_dir output --capture_type time --capture_range 1 3 --watermark_numbers 2
+python core.py --input_video demo.mp4 --device gpu --output_dir output --capture_type time --capture_range 1 3 --watermark_numbers 2
 ```
 
 注意，当画面中存在水印时，务必使用watermark_numbers参数设置水印数量，当watermark_numbers参数大于0时，会弹出一个窗口，选择画面中一个水印的任意两对角就可以框选水印。
