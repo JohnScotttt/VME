@@ -1,5 +1,6 @@
-opencv_python>=4.5.5
-paddlepaddle_gpu>=2.0.2
+opencv-python>=4.5.5
+paddlepaddle-gpu>=2.0.2
 paddleseg>=2.5
 tqdm
 numpy
+PyQt6

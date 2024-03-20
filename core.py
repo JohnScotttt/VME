@@ -2,12 +2,10 @@ import argparse
 import os
 import shutil
 import sys
-import time
 import warnings
 
 import cv2
 import numpy as np
-import paddle
 import paddleseg
 from paddleseg.cvlibs import manager
 from paddleseg.utils import get_sys_env, logger
@@ -24,6 +22,7 @@ from ppmatting.core import predict
 from ppmatting.utils import Config, MatBuilder, get_image_list
 
 warnings.filterwarnings("ignore")
+
 
 class VideoReader:
     def __init__(self, input_video):
@@ -43,7 +42,7 @@ class VideoReader:
             return ret, frame
         else:
             return None, None
-        
+
     def save_all(self, save_dir, save_name="frame", save_type="png"):
         os.makedirs(save_dir, exist_ok=True)
         while True:
@@ -58,6 +57,7 @@ class VideoReader:
 
     def release(self):
         self.cap.release()
+
 
 class VideoWriter:
     def __init__(self, output_dir, output_name, fps):
@@ -79,10 +79,11 @@ class VideoWriter:
             frame = cv2.imread(frame_path)
             self.add_frame(frame)
         self.release()
-    
+
     def release(self):
         self.video.release()
         print(f"Video has been saved to {self.output_video}")
+
 
 class Capture:
     def __init__(self, capture_type, capture_range, capture_numbers, fps):
@@ -102,8 +103,8 @@ class Capture:
         else:
             return False
 
-def watermark(image, watermark_numbers):
 
+def watermark(image, watermark_numbers):
     def draw_rectangle(event, x, y, flags, param):
         nonlocal marked, flag, ix, iy, xyxy
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -113,7 +114,7 @@ def watermark(image, watermark_numbers):
                 cv2.circle(scaled_image, (x, y), 2, (255, 255, 255), -1)
             else:
                 flag = 0
-                cv2.rectangle(scaled_image, (ix, iy), (x, y),(255, 255, 255), 2)
+                cv2.rectangle(scaled_image, (ix, iy), (x, y), (255, 255, 255), 2)
                 xyxy.append([int(min(ix / scale, x / scale)),
                              int(min(iy / scale, y / scale)),
                              int(max(ix / scale, x / scale)),
@@ -136,21 +137,21 @@ def watermark(image, watermark_numbers):
         cv2.namedWindow('image')
         cv2.moveWindow('image', 50, 50)
         cv2.setMouseCallback('image', draw_rectangle)
-        while (1):
+        while 1:
             cv2.imshow('image', scaled_image)
             if (cv2.waitKey(20) & 0xFF == 13) or marked == watermark_numbers:
-                cv2.setMouseCallback('image', lambda *args : None)
+                cv2.setMouseCallback('image', lambda *args: None)
                 break
         cv2.imshow('image', scaled_image)
         cv2.waitKey(300)
         cv2.destroyAllWindows()
-        
+
         for xy in xyxy:
             mask[xy[1]:xy[3], xy[0]:xy[2]] = 255
     return mask
 
-def analyzer(img1, img2, img1_alpha, img2_alpha, mask):
 
+def analyzer(img1, img2, img1_alpha, img2_alpha, mask):
     def rm_bad_kp(kp, mask, alpha):
         new_kp = []
         for i in kp:
@@ -183,6 +184,7 @@ def analyzer(img1, img2, img1_alpha, img2_alpha, mask):
     homography, _ = cv2.findHomography(points2, points1, cv2.RANSAC, 5.0)
     return homography
 
+
 def matting(image_path, save_dir, device="gpu"):
     cfg = Config("ppmattingv2-stdc1-human_512.yml")
     model_path = "ppmattingv2-stdc1-human_512.pdparams"
@@ -208,10 +210,11 @@ def matting(image_path, save_dir, device="gpu"):
         save_dir=save_dir,
         fg_estimate=True)
 
-def overlay(f_img, b_img): # return bgra
+
+def overlay(f_img, b_img):  # return bgra
 
     def img_float32(img):
-        return img.copy() if img.dtype != 'uint8' else (img/255.).astype('float32')
+        return img.copy() if img.dtype != 'uint8' else (img / 255.).astype('float32')
 
     if b_img[0][0].size == 3:
         b_img = cv2.cvtColor(b_img, cv2.COLOR_BGR2BGRA)
@@ -225,13 +228,14 @@ def overlay(f_img, b_img): # return bgra
     color_f[fa == 0] = [0, 0, 0]
     color_b[ba == 0] = [0, 0, 0]
 
-    a = fa + ba * (1-fa)
+    a = fa + ba * (1 - fa)
     a[a == 0] = np.NaN
-    color_over = (color_f * alpha_f + color_b * alpha_b * (1-alpha_f)) / np.expand_dims(a, axis=-1)
+    color_over = (color_f * alpha_f + color_b * alpha_b * (1 - alpha_f)) / np.expand_dims(a, axis=-1)
     color_over = np.clip(color_over, 0, 1)
 
     result_float32 = np.append(color_over, np.expand_dims(a, axis=-1), axis=-1)
-    return (result_float32*255).astype('uint8')
+    return (result_float32 * 255).astype('uint8')
+
 
 def run(input_video: str,
         device: str,
@@ -253,7 +257,7 @@ def run(input_video: str,
     os.makedirs(temp_original)
     os.makedirs(temp_matting)
     os.makedirs(temp_composite)
-    
+
     vr = VideoReader(input_video)
     vr.save_all(temp_original)
     capture = Capture(capture_type, capture_range, capture_numbers, vr.fps)
@@ -277,12 +281,13 @@ def run(input_video: str,
             mid_img = np.zeros_like(img2_alpha)
             continue
         homography = analyzer(img1, img2, img1_alpha, img2_alpha, mask)
-        mid_img = cv2.warpPerspective(mid_img, homography, (img2.shape[1], img2.shape[0]), mid_img, cv2.WARP_INVERSE_MAP)
+        mid_img = cv2.warpPerspective(mid_img, homography, (img2.shape[1], img2.shape[0]), mid_img,
+                                      cv2.WARP_INVERSE_MAP)
         output = overlay(mid_img, img2)
         cv2.imwrite(os.path.join(temp_composite, f"frame_{i}.png"), output)
         if capture.check(i):
             mid_img = overlay(img2_alpha, mid_img)
-    
+
     if output_type == "video":
         vw = VideoWriter(output_dir, output_name, vr.fps)
         vw.add_all(temp_composite)
@@ -291,6 +296,7 @@ def run(input_video: str,
             shutil.rmtree(output_path)
         shutil.copytree(temp_composite, output_path)
     shutil.rmtree(temp_dir)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
