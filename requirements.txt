@@ -1,0 +1,8 @@
+--extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cu120/
+opencv-python==4.5.5.64
+numpy==1.23
+paddlepaddle_gpu==2.6.2.post120
+paddleseg==2.8.0
+pymatting
+scikit-image
+tqdm
